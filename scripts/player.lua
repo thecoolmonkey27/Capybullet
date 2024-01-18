@@ -14,10 +14,12 @@ function Player:new(x, y)
     self.roll = false
     self.rollDirection = 0
     self.rollTimer = 0
+    self.rollDelayTimer = 0
+    self.rollDelayTimerMax = 1.5
     self.rollSpeed = 3.5
     
     self.maxHealth = 16
-    self.health = 7
+    self.health = 16
 
     self.facing = 'left'
     self.grid = anim8.newGrid(16, 16, self.spritesheet:getWidth(), self.spritesheet:getHeight())
@@ -28,12 +30,18 @@ function Player:new(x, y)
     self.animations.idleRight = anim8.newAnimation(self.grid('1-5', 1), .125)
     self.animations.rollLeft = anim8.newAnimation(self.grid('1-7', 6), .15)
     self.animations.rollRight = anim8.newAnimation(self.grid('1-7', 5), .15)
+
+    self.ui = {}
+    self.ui.fullHeart = love.graphics.newQuad(50, 3, 12, 11, uiSpritesheet)
+    self.ui.halfHeart = love.graphics.newQuad(66, 3, 12, 11, uiSpritesheet)
+    self.ui.emptyHeart = love.graphics.newQuad(82, 3, 12, 11, uiSpritesheet)
 end
 
 function Player:update(dt, m)
     local cx,cy = 0,0
     local vx, vy = 0,0
     self.x, self.y = self.collider:getPosition()
+    self.rollDelayTimer = self.rollDelayTimer - dt
     if self.rollTimer > 0 then
         self.rollTimer = self.rollTimer - dt
         if self.rollDirection == 'north' then
@@ -112,10 +120,6 @@ function Player:update(dt, m)
     self.animations.idleRight:update(dt)
     self.animations.rollLeft:update(dt)
     self.animations.rollRight:update(dt)
-    self.ui = {}
-    self.ui.fullHeart = love.graphics.newQuad(51, 4, 10, 9, uiSpritesheet)
-    self.ui.halfHeart = love.graphics.newQuad(67, 4, 10, 9, uiSpritesheet)
-    self.ui.emptyHeart = love.graphics.newQuad(83, 4, 10, 9, uiSpritesheet)
 end
 
 function Player:draw()
@@ -124,16 +128,21 @@ end
 
 function Player:drawHealth()
     for i=1,self.maxHealth/2 do
-        love.graphics.draw(uiSpritesheet, self.ui.emptyHeart, 16 + 48*(i-1), love.graphics.getHeight() - 64, 0, 4, 4)
+        love.graphics.draw(uiSpritesheet, self.ui.emptyHeart, 16 + 52*(i-1), love.graphics.getHeight() - 64, 0, 4, 4)
     end
     local h = math.floor(self.health / 2)
     for i=1,h do
-        love.graphics.draw(uiSpritesheet, self.ui.fullHeart, 16 + 48*(i-1), love.graphics.getHeight() - 64, 0, 4, 4)
+        love.graphics.draw(uiSpritesheet, self.ui.fullHeart, 16 + 52*(i-1), love.graphics.getHeight() - 64, 0, 4, 4)
     end
     if self.health / 2 ~= h then
-        love.graphics.draw(uiSpritesheet, self.ui.halfHeart, 16 + 48*(h), love.graphics.getHeight() - 64, 0, 4, 4)
+        love.graphics.draw(uiSpritesheet, self.ui.halfHeart, 16 + 52*(h), love.graphics.getHeight() - 64, 0, 4, 4)
     end
 end
+
+function Player:damage(amount)
+    self.health = self.health - amount
+end
+
 
 function Player:Roll()
     if self.roll == false then 

@@ -1,0 +1,8 @@
+name = "capybullet"
+default_targets = ["win64", "macos", "lovejs"]
+build_directory = "builds"
+
+love_files = [
+    "::git-ls-tree::",
+    "-*/.*",
+]
