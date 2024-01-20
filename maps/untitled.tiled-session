@@ -8,11 +8,11 @@
     ],
     "fileStates": {
         "map.tmx": {
-            "scale": 1.5,
-            "selectedLayer": 1,
+            "scale": 2,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 252.33333333333337,
-                "y": 253
+                "x": 228.75,
+                "y": 169.75
             }
         },
         "map.tmx#tileset": {

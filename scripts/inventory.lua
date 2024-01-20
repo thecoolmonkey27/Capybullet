@@ -19,8 +19,12 @@ function Inventory:drawGuns(p)
     local dx = mx - p.x
     local dy = my - p.y
     self.sy = 4
-    r = -math.atan2(dx, dy) + 1.5
-    if dx < 0 then
+    if gamestate == 'game' then
+        r = -math.atan2(dx, dy) + 1.5
+    else
+        r = 0
+    end
+    if dx < 0 and gamestate == 'game' then
         self.sy = -4
     end
     for _,gun in ipairs(self.table) do
@@ -166,7 +170,9 @@ function Gun:update(dt, p, i, b, key, type)
         elseif bullet.collider:enter('boss' or bullet.collider:stay('boss')) then
             bullet.collider:destroy()
             table.remove(self.bullets, key)
-            b.health = b.health - self.damage
+            if boss ~= nil then
+                b.health = b.health - self.damage
+            end
         end
     end
 end

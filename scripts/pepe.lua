@@ -1,6 +1,8 @@
 Pepe = Object.extend(Object)
 
 function Pepe:new(x, y)
+    self.name = 'pepe'
+
     self.x = x
     self.y = y
     self.sx = 4
@@ -12,8 +14,8 @@ function Pepe:new(x, y)
     self.gun1 = Gun('wand', 10, 2, 3, 1, .2, sounds.glock.shoot)
     self.spritesheet = love.graphics.newImage('sprites/pepe-spritesheet.png')
     self.grid = anim8.newGrid(32, 32, self.spritesheet:getWidth(), self.spritesheet:getHeight())
-    self.maxHealth = 50
-    self.health = 50
+    self.maxHealth = 100
+    self.health = 100
     self.healthQuad = love.graphics.newQuad(0, 52, 103, 7, uiSpritesheet)
 
     self.stateTimerMax = 3
@@ -22,6 +24,7 @@ function Pepe:new(x, y)
     self.regular = {
         bullets = {},
         speed = 300,
+        quad = love.graphics.newQuad(0, 128, 16, 16, self.spritesheet),
         delays = {
             max = .3,
             current = .3
@@ -29,10 +32,21 @@ function Pepe:new(x, y)
     }
     self.triple = {
         speed = 600,
+        quad = love.graphics.newQuad(16, 128, 32, 32, self.spritesheet),
         bullets = {},
         delays = {
             max = .7,
             current = .7
+        }
+    }
+    self.circle = {
+        angle = 0,
+        speed = 400,
+        quad = love.graphics.newQuad(0, 144, 16, 16, self.spritesheet),
+        bullets = {},
+        delays = {
+            max = .05,
+            current = .05
         }
     }
     
@@ -40,15 +54,21 @@ function Pepe:new(x, y)
     self.facing = 'left'
     self.animations = {}
     
-    self.animations.walkLeft = anim8.newAnimation(self.grid('1-4', 3), .125)
-    self.animations.walkRight = anim8.newAnimation(self.grid('1-4', 4), .125)
-    self.animations.idleLeft = anim8.newAnimation(self.grid('1-5', 1), .125)
-    self.animations.idleRight = anim8.newAnimation(self.grid('1-5', 2), .125)
+    self.animations.walkLeft = anim8.newAnimation(self.grid('1-4', 4), .125)
+    self.animations.walkRight = anim8.newAnimation(self.grid('1-4', 3), .125)
+    self.animations.idleLeft = anim8.newAnimation(self.grid('1-5', 2), .125)
+    self.animations.idleRight = anim8.newAnimation(self.grid('1-5', 1), .125)
     self.animations.rollLeft = anim8.newAnimation(self.grid('1-8', 5), .15)
     self.animations.rollRight = anim8.newAnimation(self.grid('1-8', 6), .15)
 
+    self.nameQuad = love.graphics.newQuad(0, 160, 48, 16, self.spritesheet)
+    self.captionQuad = love.graphics.newQuad(0, 176, 128, 16, self.spritesheet)
+    self.imageQuad = love.graphics.newQuad(0, 0, 32, 32, self.spritesheet)
+
     -- shoot, walk, roll
     self.state = 'walk'
+    self.states = {'regular', 'triple', 'circle'}
+    self.statekey = 1
 end
 
 function Pepe:update(dt, p, i)
@@ -70,6 +90,8 @@ function Pepe:update(dt, p, i)
         self:attackRegular(dt, p)
     elseif self.state == 'triple' then
         self:attackTriple(dt, p)
+    elseif self.state == 'circle' then
+        self:attackCircle(dt, p)
     end
 
     for k,bullet in pairs(self.regular.bullets) do
@@ -94,20 +116,33 @@ function Pepe:update(dt, p, i)
             table.remove(self.triple.bullets, k)
         end
     end
+    for k,bullet in pairs(self.circle.bullets) do
+        if bullet:enter('player') then
+            bullet:destroy()
+            table.remove(self.circle.bullets, k)
+
+            p:damage(.5)
+        elseif bullet:enter('wall') then
+            bullet:destroy()
+            table.remove(self.circle.bullets, k)
+        end
+    end
 end
 
 function Pepe:updateState(dt)
     self.stateTimer = self.stateTimer - dt
     if self.stateTimer < 0 then
+        if self.statekey < 3 then
+            self.statekey = self.statekey + 1
+        else
+            self.statekey = 1
+        end
         self.collider:setLinearVelocity(0, 0)
         if self.state == 'walk' then
-            self.state = 'regular'
-        elseif self.state == 'regular' then
-            self.state = 'triple'
-        elseif self.state == 'triple' then
+            self.state = self.states[self.statekey]
+        else
             self.state = 'walk'
         end
-
         self.stateTimer = self.stateTimerMax
     end
 end
@@ -146,10 +181,11 @@ function Pepe:attackRegular(dt, p)
     local scale = 200
     self.regular.delays.current = self.regular.delays.current - dt
     if self.regular.delays.current < 0 then
-        table.insert(self.regular.bullets, world:newCircleCollider(self.x, self.y, 10))
+        table.insert(self.regular.bullets, world:newCircleCollider(self.x, self.y + 20, 16))
         self.regular.delays.current = self.regular.delays.max
         self.regular.bullets[#self.regular.bullets]:setCollisionClass('bossBullet')
         self.regular.bullets[#self.regular.bullets]:setLinearVelocity(math.cos(angle)*speed, math.sin(angle)*speed)
+        self.regular.bullets[#self.regular.bullets]:setAngle(angle)
     end
 end
 
@@ -161,10 +197,26 @@ function Pepe:attackTriple(dt, p)
     local scale = 200
     self.triple.delays.current = self.triple.delays.current - dt
     if self.triple.delays.current < 0 then
-        table.insert(self.triple.bullets, world:newCircleCollider(self.x, self.y, 30))
+        table.insert(self.triple.bullets, world:newCircleCollider(self.x, self.y + 20, 30))
         self.triple.delays.current = self.triple.delays.max
         self.triple.bullets[#self.triple.bullets]:setCollisionClass('bossBullet')
         self.triple.bullets[#self.triple.bullets]:setLinearVelocity(math.cos(angle)*speed, math.sin(angle)*speed)
+        self.triple.bullets[#self.triple.bullets]:setAngle(angle)
+    end
+end
+
+function Pepe:attackCircle(dt, p)
+    local dx = p.x - self.x
+    local dy = p.y - self.y
+    local speed = self.circle.speed
+    self.circle.delays.current = self.circle.delays.current - dt
+    if self.circle.delays.current < 0 then
+        self.circle.angle = self.circle.angle + math.pi / 8
+        table.insert(self.circle.bullets, world:newCircleCollider(self.x, self.y + 20, 16))
+        self.circle.delays.current = self.circle.delays.max
+        self.circle.bullets[#self.circle.bullets]:setCollisionClass('bossBullet')
+        self.circle.bullets[#self.circle.bullets]:setLinearVelocity(math.cos(self.circle.angle)*speed, math.sin(self.circle.angle)*speed)
+        self.circle.bullets[#self.circle.bullets]:setAngle(self.circle.angle)
     end
 end
 
@@ -191,6 +243,17 @@ function Pepe:draw(p, g)
         self.sy = -4
     end
     
+    for k,bullet in pairs(self.regular.bullets) do
+        love.graphics.draw(self.spritesheet, self.regular.quad, bullet:getX(), bullet:getY(), bullet:getAngle(), 4, 4, 8, 8)
+    end
+    for k,bullet in pairs(self.triple.bullets) do
+        love.graphics.draw(self.spritesheet, self.triple.quad, bullet:getX(), bullet:getY(), bullet:getAngle(), 4, 4, 16, 16)
+    end
+    for k,bullet in pairs(self.circle.bullets) do
+        love.graphics.draw(self.spritesheet, self.circle.quad, bullet:getX(), bullet:getY(), bullet:getAngle(), 4, 4, 8, 8)
+    end
+
+
     love.graphics.draw(gunSpritesheet, self.gun1.sprite, self.x, self.y + 20, r, self.sx, self.sy, 0, 8)
 end
 

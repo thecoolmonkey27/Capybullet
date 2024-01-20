@@ -120,6 +120,12 @@ function Player:update(dt, m)
     self.animations.idleRight:update(dt)
     self.animations.rollLeft:update(dt)
     self.animations.rollRight:update(dt)
+
+    if self.collider:enter('boss') then
+        self.health = self.health - 1
+        sounds.player.hit:stop()
+        sounds.player.hit:play()
+    end
 end
 
 function Player:draw()
@@ -141,6 +147,10 @@ end
 
 function Player:damage(amount)
     self.health = self.health - amount
+    local angle = math.pi * math.random(1,2) + math.pi / math.random(1, 4)
+    flux.to(shake, .05, {x = -math.cos(angle)*7, y = -math.sin(angle)*7}):after(shake, .07, {x = 0, y = 0})
+    sounds.player.hit:stop()
+    sounds.player.hit:play()
 end
 
 
