@@ -321,6 +321,8 @@ function love.update(dt)
             bosskey = 1
             player.health = player.maxHealth
             gamestate = 'bossScreen'
+
+            inventory = Inventory()
             flux.to(curtainLeft, .6, {x = curtainLeft.targetX, y = curtainLeft.targetY}):oncomplete(function() player.collider:setPosition(50,50) end):after(curtainLeft, .3, {x = curtainLeft.returnX, y = curtainLeft.returnY}):delay(2):oncomplete(function() gamestate = 'game' end)
             flux.to(curtainRight, .6, {x = curtainRight.targetX, y = curtainRight.targetY}):oncomplete(function() player.collider:setPosition(50,50) end):after(curtainRight, .3, {x = curtainRight.returnX, y = curtainRight.returnY}):delay(2)
             flux.to(youDied, .6, {x = youDied.targetX, y = youDied.targetY}):oncomplete(function() player.collider:setPosition(50,50) end):after(youDied, .3, {x = youDied.returnX, y = youDied.returnY}):delay(2)
