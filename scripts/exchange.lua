@@ -45,17 +45,19 @@ function Exchange:draw()
     love.graphics.setColor(1, 1, 1, 1)
 
     love.graphics.draw(uiSpritesheet, self.iconQuad, self.table[self.inventory1].x, self.table[self.inventory1].y, 0, 8, 8)
-    love.graphics.draw(gunSpritesheet, self.table[self.inventory1].gun.sprite, self.table[self.inventory1].x + 48, self.table[self.inventory1].y + 48, 0, 8, 8)
+    love.graphics.draw(gunSpritesheet, self.table[self.inventory1].gun.icon, self.table[self.inventory1].x , self.table[self.inventory1].y , 0, 16, 16)
     
     love.graphics.draw(uiSpritesheet, self.iconQuad, self.table[self.inventory2].x, self.table[self.inventory2].y, 0, 8, 8)
-    love.graphics.draw(gunSpritesheet, self.table[self.inventory2].gun.sprite, self.table[self.inventory2].x + 48, self.table[self.inventory2].y + 48, 0, 8, 8)
+    love.graphics.draw(gunSpritesheet, self.table[self.inventory2].gun.icon, self.table[self.inventory2].x , self.table[self.inventory2].y , 0, 16, 16)
     
     love.graphics.draw(uiSpritesheet, self.iconQuad, self.table[self.inventory3].x, self.table[self.inventory3].y, 0, 8, 8)
-    love.graphics.draw(gunSpritesheet, self.table[self.inventory3].gun.sprite, self.table[self.inventory3].x + 48, self.table[self.inventory3].y + 48, 0, 8, 8)
+    love.graphics.draw(gunSpritesheet, self.table[self.inventory3].gun.icon, self.table[self.inventory3].x , self.table[self.inventory3].y , 0, 16, 16)
 
     love.graphics.draw(uiSpritesheet, self.arrowQuad, love.graphics.getWidth() / 2 + 128, love.graphics.getHeight() - 100, 0, -4, 4)
     love.graphics.draw(uiSpritesheet, self.arrowQuad, love.graphics.getWidth() / 2 - 128, love.graphics.getHeight() - 100, 0, 4, 4)
     love.graphics.print('click', love.graphics.getWidth()/2 - 50, love.graphics.getHeight() - 75)
+
+    love.graphics.print('Click escape to close. ', 20,  20)
 end
 
 function Exchange:clicked(x, y)

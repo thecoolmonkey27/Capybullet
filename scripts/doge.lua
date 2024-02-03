@@ -1,7 +1,7 @@
-Pepe = Object.extend(Object)
+Doge = Object.extend(Object)
 
-function Pepe:new(x, y)
-    self.name = 'pepe'
+function Doge:new(x, y)
+    self.name = 'Doge'
 
     self.squishX = 4
     self.x = x
@@ -12,37 +12,40 @@ function Pepe:new(x, y)
     self.collider = world:newRectangleCollider(self.x, self.y, 16*4, 32*4)
     self.collider:setFixedRotation(true)
     self.collider:setCollisionClass('boss')
-    self.gun1 = Gun('wand', 10, 2, 3, 1, .2, sounds.glock.shoot)
-    self.spritesheet = love.graphics.newImage('sprites/pepe-spritesheet.png')
+
+    --function Gun:new(name, shots, reload, row, spawns, delay, timer, spreadMax, spreadTimeToMax, damage, shootSound)
+    self.gun1 = Gun('coin', 6, .5, 4, 1, .4, sounds.glock.shoot)
+    self.spritesheet = love.graphics.newImage('sprites/doge-spritesheet.png')
     self.grid = anim8.newGrid(32, 32, self.spritesheet:getWidth(), self.spritesheet:getHeight())
-    self.maxHealth = 100
-    self.health = 100
+    self.maxHealth = 150
+    self.health = 150
     self.healthQuad = love.graphics.newQuad(0, 52, 103, 7, uiSpritesheet)
 
     self.stateTimerMax = 3
     self.stateTimer = 3
 
-    self.regular = {
+    self.one = {
         bullets = {},
-        speed = 300,
+        speed = 900,
         quad = love.graphics.newQuad(0, 128, 16, 16, self.spritesheet),
         delays = {
-            max = .3,
-            current = .3
+            max = .15,
+            current = .15
         }
     }
-    self.triple = {
+    self.two = {
         speed = 600,
-        quad = love.graphics.newQuad(16, 128, 32, 32, self.spritesheet),
+            max = .7,
+        quad = love.graphics.newQuad(0, 144, 16, 16, self.spritesheet),
         bullets = {},
         delays = {
             max = .7,
             current = .7
         }
     }
-    self.circle = {
+    self.three = {
         angle = 0,
-        speed = 400,
+        speed = 700,
         quad = love.graphics.newQuad(0, 144, 16, 16, self.spritesheet),
         bullets = {},
         delays = {
@@ -68,18 +71,12 @@ function Pepe:new(x, y)
 
     -- shoot, walk, roll
     self.state = 'walk'
-    self.states = {'regular', 'triple', 'circle'}
+    self.states = {'walk', 'one', 'two', 'three'}
     self.statekey = 1
-    self.offsetX = 0
-    self.offsetY = 0
+    self.gunAngle = 0 
 end
 
-function Pepe:playSound()
-    local sound = sounds.wand.shoot:clone()
-    sound:play()
-end
-
-function Pepe:update(dt, p, i)
+function Doge:update(dt, p, i)
     self.x = self.collider:getX()
     self.y = self.collider:getY()
 
@@ -93,69 +90,66 @@ function Pepe:update(dt, p, i)
     self:updateState(dt)
 
     if self.state == 'walk' then
-        self:walk(dt, p, i)
-    elseif self.state == 'regular' then
-        self:attackRegular(dt, p)
-    elseif self.state == 'triple' then
-        self:attackTriple(dt, p)
-    elseif self.state == 'circle' then
-        self:attackCircle(dt, p)
+        
+    elseif self.state == 'one' then
+        self:attackOne(dt, p)
+    elseif self.state == 'two' then
+        self:attackTwo(dt, p)
+    elseif self.state == 'three' then
+        self:attackThree(dt, p)
     end
+    self:walk(dt, p, i)
 
-    for k,bullet in pairs(self.regular.bullets) do
+    for k,bullet in pairs(self.one.bullets) do
         if bullet:enter('player') then
             bullet:destroy()
-            table.remove(self.regular.bullets, k)
+            table.remove(self.one.bullets, k)
 
             p:damage(.5)
-        elseif bullet:enter('wall') then
-            bullet:destroy()
-            table.remove(self.regular.bullets, k)
         end
     end
-    for k,bullet in pairs(self.triple.bullets) do
+    for k,bullet in pairs(self.two.bullets) do
         if bullet:enter('player') then
             bullet:destroy()
-            table.remove(self.triple.bullets, k)
+            table.remove(self.two.bullets, k)
 
             p:damage(2)
         elseif bullet:enter('wall') then
             bullet:destroy()
-            table.remove(self.triple.bullets, k)
+            table.remove(self.two.bullets, k)
         end
     end
-    for k,bullet in pairs(self.circle.bullets) do
+    for k,bullet in pairs(self.three.bullets) do
+        bullet:setAngle(bullet:getAngle() + dt * 4)
         if bullet:enter('player') then
             bullet:destroy()
-            table.remove(self.circle.bullets, k)
+            table.remove(self.three.bullets, k)
 
             p:damage(.5)
         elseif bullet:enter('wall') then
             bullet:destroy()
-            table.remove(self.circle.bullets, k)
+            table.remove(self.three.bullets, k)
         end
     end
 end
 
-function Pepe:updateState(dt)
+function Doge:updateState(dt)
     self.stateTimer = self.stateTimer - dt
     if self.stateTimer < 0 then
-        if self.statekey < 3 then
-            self.statekey = self.statekey + 1
+        self.stateTimer = self.stateTimerMax
+        self.statekey = self.statekey + 1
+        if self.states[self.statekey] ~= nil then
+            self.state = self.states[self.statekey]
+            self.collider:setLinearVelocity(0, 0)
         else
             self.statekey = 1
-        end
-        self.collider:setLinearVelocity(0, 0)
-        if self.state == 'walk' then
             self.state = self.states[self.statekey]
-        else
-            self.state = 'walk'
+            self.collider:setLinearVelocity(0, 0)
         end
-        self.stateTimer = self.stateTimerMax
     end
 end
 
-function Pepe:walk(dt, p, i)
+function Doge:walk(dt, p, i)
     local cx, cy = 0,0
     if self.x > p.x + 20 then
         cx = cx - 1
@@ -181,60 +175,59 @@ function Pepe:walk(dt, p, i)
     self.collider:setLinearVelocity(self.speed * cx, self.speed * cy)
 end
 
-function Pepe:attackRegular(dt, p)
+function Doge:attackOne(dt, p)
     local dx = p.x - self.x
     local dy = p.y - self.y
     local angle = -math.atan2(dx, dy) + math.pi / 2
-    local speed = self.regular.speed
+    local speed = self.one.speed
     local scale = 200
-    self.regular.delays.current = self.regular.delays.current - dt
-    if self.regular.delays.current < 0 then
-        self:playSound()
-        self:recoil()
-        table.insert(self.regular.bullets, world:newCircleCollider(self.x, self.y + 20, 16))
-        self.regular.delays.current = self.regular.delays.max
-        self.regular.bullets[#self.regular.bullets]:setCollisionClass('bossBullet')
-        self.regular.bullets[#self.regular.bullets]:setLinearVelocity(math.cos(angle)*speed, math.sin(angle)*speed)
-        self.regular.bullets[#self.regular.bullets]:setAngle(angle)
+    self.one.delays.current = self.one.delays.current - dt
+    if self.one.delays.current < 0 then
+        self:playSound(sounds.coin)
+        table.insert(self.one.bullets, world:newRectangleCollider(math.random(0, 16*15*4), -20, 32, 4))
+        self.one.delays.current = self.one.delays.max
+        self.one.bullets[#self.one.bullets]:setCollisionClass('bossBullet')
+        self.one.bullets[#self.one.bullets]:setLinearVelocity(0, speed)
     end
 end
 
-function Pepe:attackTriple(dt, p)
+function Doge:attackTwo(dt, p)
     local dx = p.x - self.x
     local dy = p.y - self.y
     local angle = -math.atan2(dx, dy) + math.pi / 2
-    local speed = self.triple.speed
+    local speed = self.two.speed
     local scale = 200
-    self.triple.delays.current = self.triple.delays.current - dt
-    if self.triple.delays.current < 0 then
-        self:playSound()
+    self.two.delays.current = self.two.delays.current - dt
+    if self.two.delays.current < 0 then
+        self:playSound(sounds.grenade.shoot)
         self:recoil()
-        table.insert(self.triple.bullets, world:newCircleCollider(self.x, self.y + 20, 30))
-        self.triple.delays.current = self.triple.delays.max
-        self.triple.bullets[#self.triple.bullets]:setCollisionClass('bossBullet')
-        self.triple.bullets[#self.triple.bullets]:setLinearVelocity(math.cos(angle)*speed, math.sin(angle)*speed)
-        self.triple.bullets[#self.triple.bullets]:setAngle(angle)
+        table.insert(self.two.bullets, world:newCircleCollider(self.x, self.y + 20, 16))
+        self.two.delays.current = self.two.delays.max
+        self.two.bullets[#self.two.bullets]:setCollisionClass('bossBullet')
+        self.two.bullets[#self.two.bullets]:setLinearVelocity(math.cos(angle)*speed, math.sin(angle)*speed)
+        self.two.bullets[#self.two.bullets]:setAngle(angle)
     end
 end
 
-function Pepe:attackCircle(dt, p)
+function Doge:attackThree(dt, p)
     local dx = p.x - self.x
     local dy = p.y - self.y
-    local speed = self.circle.speed
-    self.circle.delays.current = self.circle.delays.current - dt
-    if self.circle.delays.current < 0 then
-        self:playSound()
+    local speed = self.three.speed
+    self.three.delays.current = self.three.delays.current - dt
+    if self.three.delays.current < 0 then
+        self:playSound(sounds.grenade.shoot)
         self:recoil()
-        self.circle.angle = self.circle.angle + math.pi / 8
-        table.insert(self.circle.bullets, world:newCircleCollider(self.x, self.y + 20, 16))
-        self.circle.delays.current = self.circle.delays.max
-        self.circle.bullets[#self.circle.bullets]:setCollisionClass('bossBullet')
-        self.circle.bullets[#self.circle.bullets]:setLinearVelocity(math.cos(self.circle.angle)*speed, math.sin(self.circle.angle)*speed)
-        self.circle.bullets[#self.circle.bullets]:setAngle(self.circle.angle)
+        self.three.angle = self.three.angle + math.pi / 4
+        table.insert(self.three.bullets, world:newCircleCollider(self.x, self.y + 20, 16))
+        self.three.delays.current = self.three.delays.max
+        self.three.bullets[#self.three.bullets]:setCollisionClass('bossBullet')
+        self.three.bullets[#self.three.bullets]:setLinearVelocity(math.cos(self.three.angle)*speed, math.sin(self.three.angle)*speed)
+        self.three.bullets[#self.three.bullets]:setAngle(self.three.angle)
+        self.gunAngle = self.three.angle
     end
 end
 
-function Pepe:draw(p, g)
+function Doge:draw(p, g)
     if self.state == 'walk' then
         if self.facing == 'right' then
             self.animations.walkRight:draw(self.spritesheet, self.x, self.y, 0, self.squishX, 4, 16, 16)
@@ -251,21 +244,25 @@ function Pepe:draw(p, g)
     local dx = p.x - self.x
     local dy = p.y - self.y
     local r = -math.atan2(dx, dy) + math.pi / 2
+    if self.state == 'three' then
+        r = self.gunAngle
+    end
     self.sx = 4
     self.sy = 4
     if p.x < self.x then
         self.sy = -4
     end
     
-    for k,bullet in pairs(self.regular.bullets) do
-        love.graphics.draw(self.spritesheet, self.regular.quad, bullet:getX(), bullet:getY(), bullet:getAngle(), 4, 4, 8, 8)
+    for k,bullet in pairs(self.one.bullets) do
+        love.graphics.draw(self.spritesheet, self.one.quad, bullet:getX(), bullet:getY(), bullet:getAngle(), 4, 4, 8, 8)
     end
-    for k,bullet in pairs(self.triple.bullets) do
-        love.graphics.draw(self.spritesheet, self.triple.quad, bullet:getX(), bullet:getY(), bullet:getAngle(), 4, 4, 16, 16)
+    for k,bullet in pairs(self.two.bullets) do
+        love.graphics.draw(self.spritesheet, self.two.quad, bullet:getX(), bullet:getY(), bullet:getAngle(), 4, 4, 8, 8)
     end
-    for k,bullet in pairs(self.circle.bullets) do
-        love.graphics.draw(self.spritesheet, self.circle.quad, bullet:getX(), bullet:getY(), bullet:getAngle(), 4, 4, 8, 8)
+    for k,bullet in pairs(self.three.bullets) do
+        love.graphics.draw(self.spritesheet, self.three.quad, bullet:getX(), bullet:getY(), bullet:getAngle(), 4, 4, 8, 8)
     end
+
 
     local ox, oy = self.gun1.offsetX * math.cos(r), self.gun1.offsetX * math.sin(r)
     local oa = 0
@@ -275,10 +272,11 @@ function Pepe:draw(p, g)
         oa = self.gun1.offsetY
     end
 
+
     love.graphics.draw(gunSpritesheet, self.gun1.sprite, self.x - ox, self.y + 20 - oy, r - oa, self.sx, self.sy, 0, 8)
 end
 
-function Pepe:drawHealth()
+function Doge:drawHealth()
     local ratio = self.health / self.maxHealth
     love.graphics.draw(uiSpritesheet, self.healthQuad, love.graphics.getWidth()/2 - 206, 50, 0, 4, 4)
     love.graphics.setColor(230/255, 69/255, 57/255)
@@ -286,14 +284,19 @@ function Pepe:drawHealth()
     love.graphics.setColor(255/255, 194/255, 161/255)
     love.graphics.rectangle('fill', love.graphics.getWidth()/2 - 198 + ratio * 392, 58, 4, 12)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.print('Pepe', love.graphics.getWidth()/2 - 45, 20)
+    love.graphics.print('Doge', love.graphics.getWidth()/2 - 45, 20)
 end
 
-function Pepe:setState(state)
+function Doge:setState(state)
     self.state = state
 end
 
-function Pepe:recoil()
+function Doge:recoil()
     flux.to(self.gun1, .05, {offsetX = 15}):after(self.gun1, .2, {offsetX = 0})
     flux.to(self.gun1, .1, {offsetY = math.pi/8}):after(self.gun1, .2, {offsetY = 0})
+end
+
+function Doge:playSound(sound)
+    local s = sound:clone()
+    s:play()
 end

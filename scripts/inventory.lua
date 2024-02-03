@@ -19,21 +19,29 @@ function Inventory:drawGuns(p)
     local dx = mx - p.x
     local dy = my - p.y
     self.sy = 4
-    if gamestate == 'game' then
+    if gamestate == 'game' or gamestate == 'bossScreen'then
         r = -math.atan2(dx, dy) + 1.5
     else
         r = 0
     end
-    if dx < 0 and gamestate == 'game' then
+    if dx < 0 and gamestate == 'game' or gamestate == 'bossScreen' then
         self.sy = -4
     end
     for _,gun in ipairs(self.table) do
         gun:drawBullets()
     end
-    love.graphics.draw(gunSpritesheet, self.table[self.selected].sprite, p.x, p.y + 10, r, self.sx, self.sy, 0, 8)
+    local ox, oy = self.table[self.selected].offsetX * math.cos(r), self.table[self.selected].offsetX * math.sin(r)
+    local oa = 0
+    if self.sy > 0 then
+        oa = self.table[self.selected].offsetY * -1
+    else
+        oa = self.table[self.selected].offsetY
+    end
+    love.graphics.draw(gunSpritesheet, self.table[self.selected].sprite, p.x - ox, p.y + 10 - oy, r + oa, self.sx, self.sy, 0, 10)
 end
 
 function Inventory:drawUi()
+    love.graphics.setFont(fontBig)
     love.graphics.printf('1', love.graphics.getWidth() - 46 * 4, love.graphics.getHeight() - 30 * 4, 64, 'right')
     if self.selected == 1 then
         love.graphics.draw(uiSpritesheet, self.hotbarSelectedQuad, love.graphics.getWidth() - 40 * 4, love.graphics.getHeight() - 20 * 4, 0, 4, 4)
@@ -80,7 +88,7 @@ function Inventory:drawUi()
         --]]
     end
     local current = self.table[self.selected]
-    if current.spawns == 1 then
+    if current.spawns == 1 and gamestate == 'game' then
         love.graphics.rectangle('fill', mouseX - current.spread / 10, mouseY + 30, 3, 10)
         love.graphics.rectangle('fill', mouseX + current.spread / 10, mouseY + 30, 3, 10)
     end
@@ -110,6 +118,8 @@ function Gun:new(name, shots, reload, row, spawns, delay, timer, spreadMax, spre
     self.spreadMax = spreadMax
     self.spreadTimeToMax = spreadTimeToMax
     self.spread = spreadMax
+    self.offsetX = 0
+    self.offsetY = 0
 end
 
 function Gun:update(dt, p, i, b, key, type)
@@ -139,8 +149,8 @@ function Gun:update(dt, p, i, b, key, type)
         if self.spawns == 1 then
             flux.to(self, self.spreadTimeToMax, {spread = self.spreadMax})
         end
-        self.sounds.shoot:stop()
-        self.sounds.shoot:play()
+        local sound = self.sounds.shoot:clone()
+        sound:play()
         self.shotsCount = self.shotsCount - 1
         for i=1,self.spawns do
             if self.spawns > 1 then
@@ -173,6 +183,11 @@ function Gun:update(dt, p, i, b, key, type)
             if boss ~= nil then
                 b.health = b.health - self.damage
             end
+            local sound = sounds.bossHurt:clone()
+            if b ~= nil then
+                flux.to(b, .1, {squishX = 3.2}):after(b, .1,  {squishX = 4})
+            end
+
         end
     end
 end
@@ -187,6 +202,8 @@ function Gun:shoot(x, y, angle, type, timer, inv)
     self.bullets[key].collider:setLinearVelocity(cx, cy)
     flux.to(shake, .05, {x = -math.cos(angle)*7, y = -math.sin(angle)*7}):after(shake, .07, {x = 0, y = 0})
     flux.to(inventory, .1, {sx = 3}):after(inventory, .1, {sx = 4})
+    flux.to(self, .05, {offsetX = 15}):after(self, .2, {offsetX = 0})
+    flux.to(self, .1, {offsetY = math.pi/8}):after(self, .2, {offsetY = 0})
 end
 
 function Gun:drawBullets()

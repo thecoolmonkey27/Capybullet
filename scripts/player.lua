@@ -129,7 +129,7 @@ function Player:update(dt, m)
 end
 
 function Player:draw()
-      self.animations[self.direction]:draw(self.spritesheet, self.x, self.y, 0, 4, 4, 8, 8)
+      self.animations[self.direction]:draw(self.spritesheet, self.x, self.y, 0, 4, 4, 8, 10)
 end
 
 function Player:drawHealth()

@@ -2,13 +2,14 @@ function love.load()
     require 'math'
     scale = 4
     love.graphics.setDefaultFilter('nearest', 'nearest')
-    font = love.graphics.newFont('bongo.ttf', 13)
-    fontBig = love.graphics.newFont('bongo.ttf', 20)
+    font = love.graphics.newFont('comicsans.ttf', 20)
+    fontBig = love.graphics.newFont('comicsans.ttf', 30)
     love.graphics.setFont(font)
     shake = {
         x = 1,
         y = 1
     }
+    love.graphics.setBackgroundColor(79/255, 164/255, 184/255, 1)
 
     gunSpritesheet = love.graphics.newImage('sprites/guns-spritesheet.png')
     uiSpritesheet = love.graphics.newImage('sprites/ui-spritesheet.png')
@@ -20,23 +21,44 @@ function love.load()
         glock = {
             shoot = love.audio.newSource('sounds/glock-shoot.mp3', 'static')
         },
+        wand = {
+            shoot = love.audio.newSource('sounds/wand-shoot.mp3', 'static')
+        },
         player = {
             hit = love.audio.newSource('sounds/hit.mp3', 'static')
+        },
+        grenade = {
+            shoot = love.audio.newSource('sounds/grenade-shoot.mp3', 'static')
+        },
+        coin = love.audio.newSource('sounds/coin.mp3', 'static'),
+        bossHurt = love.audio.newSource('sounds/bossHurt.wav', 'static'),
+        alert = {
+            sound = love.audio.newSource('sounds/alert.mp3', 'static'),
+            pitch = 1.6
+        },
+        music = {
+            boss = love.audio.newSource('sounds/bossMusic.mp3', 'static'),
+            pitch = .9,
+            volume = .7
         }
     }
+    sounds.glock.shoot:setVolume(.7)
 
     Object = require 'libraries/classic'
     require 'scripts/player'
     require 'scripts/inventory'
     require 'scripts/button'
     require 'scripts/pepe'
+
     require 'scripts/exchange'
+    require 'scripts/doge'
+    require 'scripts/man'
     
     -- WINDFIELD
     wf = require 'libraries/windfield'
     world = wf.newWorld()
     world:addCollisionClass('player')
-    world:addCollisionClass('boss', {ignores = {'player'}})
+    world:addCollisionClass('boss', {ignores = {'player', 'boss'}})
     world:addCollisionClass('wall')
     world:addCollisionClass('playerBullet', {ignores = {'player', 'boss', 'wall', 'playerBullet'}})
     world:addCollisionClass('bossBullet', {ignores = {'player', 'boss', 'wall', 'playerBullet', 'bossBullet'}})
@@ -45,7 +67,7 @@ function love.load()
     -- ANIM8
     anim8 = require 'libraries/anim8'
 
-    player = Player(love.graphics.getWidth()/2, love.graphics.getHeight()/2)
+    player = Player(100, 100)
     inventory = Inventory()
     boss = nil
 
@@ -114,9 +136,9 @@ function love.load()
     title = {
         targetX = 300,
         targetY = 50,
-        x = -400,
+        x = -600,
         y = 50,
-        returnX = -400,
+        returnX = -600,
         returnY = 50,
     }
     caption = {
@@ -139,34 +161,74 @@ function love.load()
         targetX = 0,
         targetY = 0,
         x = 0,
-        y = -1000,
+        y = -1000,    
         returnX = 0,
         returnY = -1000,
     }
-
+    curtainLeft = {
+        targetX = 0,
+        targetY = 0,
+        x = -love.graphics.getWidth()/2,
+        y = 0,
+        returnX = -love.graphics.getWidth()/2,
+        returnY = 0,
+    }
+    curtainRight= {
+        targetX = love.graphics.getWidth()/2,
+        targetY = 0,
+        x = love.graphics.getWidth() + love.graphics.getWidth()/2,
+        y = 0,
+        returnX = love.graphics.getWidth() + love.graphics.getWidth()/2,
+        returnY = 0,
+    }
+    youDied = {
+        targetX = love.graphics.getWidth()/2 - 80,
+        targetY = love.graphics.getHeight()/2,
+        x = love.graphics.getWidth()/2 - 60,
+        y = -100,
+        returnX = love.graphics.getWidth()/2 - 80,
+        returnY = -100,
+    }
 end
  
 function nextText()
     textkey = textkey + 1
     if textkey <= #textTable then
         textbox:send(textTable[textkey])
+        space.opacity = 0
     else
         gamestate = 'game'
         love.graphics.setFont(fontBig)
     end
 end
 
+function tweenBossScreen()
+    gamestate = 'bossScreen'
+    flux.to(title, .6, {x = title.targetX, y = title.targetY}):after(title, .4, {x = title.returnX, y = title.returnY}):delay(2)
+    flux.to(background, .3, {x = background.targetX, y = background.targetY}):after(background, .4, {x = background.returnX, y = background.returnY}):delay(2.4)
+    flux.to(image, .6, {x = image.targetX, y = image.targetY}):after(image, .4, {x = image.returnX, y = image.returnY}):delay(2)
+    flux.to(caption, .6, {x = caption.targetX, y = caption.targetY}):after(caption, .4, {x = caption.returnX, y = caption.returnY}):delay(2):oncomplete(function() gamestate = 'game' end)
+    flux.to(sounds.music, .1, {volume = .4}):after(sounds.music, .1, {volume = .7}):delay(3)
+end
+
 function nextBoss(dt)
     if boss == nil then
         if bosstimer < 0 then
             if bosskey == 1 then
-                boss = Pepe(50, 50)
+                boss = Pepe(200, 200)
                 bosstimer = 5
                 screenTimer = 3
-                flux.to(title, .4, {x = title.targetX, y = title.targetY}):after(title, .4, {x = title.returnX, y = title.returnY}):delay(2)
-                flux.to(background, .1, {x = background.targetX, y = background.targetY}):after(background, .4, {x = background.returnX, y = background.returnY}):delay(2.4)
-                flux.to(image, .4, {x = image.targetX, y = image.targetY}):after(image, .4, {x = image.returnX, y = image.returnY}):delay(2)
-                flux.to(caption, .4, {x = caption.targetX, y = caption.targetY}):after(caption, .4, {x = caption.returnX, y = caption.returnY}):delay(2)
+                tweenBossScreen()
+            elseif bosskey == 2 then
+                boss = Doge(50, 50)
+                bosstimer = 5
+                screenTimer = 3
+                tweenBossScreen()
+            elseif bosskey == 3 then
+                boss = Man(50, 50)
+                bosstimer = 5
+                screenTimer = 3
+                tweenBossScreen()
             end
         else
             bosstimer = bosstimer - dt
@@ -175,6 +237,12 @@ function nextBoss(dt)
 end
 
 function love.update(dt)
+    if not sounds.music.boss:isPlaying() then
+        sounds.music.boss:play()
+    end
+    sounds.music.boss:setPitch(sounds.music.pitch)
+    sounds.music.boss:setVolume(sounds.music.volume)
+    
     mouseX, mouseY = love.mouse.getPosition()
     mx,my = cam:mousePosition()
     flux.update(dt)
@@ -184,6 +252,8 @@ function love.update(dt)
         flux.to(space, space.time, {opacity = 0}):ease('linear'):after(space, space.time, {opacity = 1}):ease('linear')
     end
     if gamestate == 'game'then
+
+        
         nextBoss(dt)
         flux.to(camZoom, 1, {zoom = 1})
         cam:zoomTo(camZoom.zoom)
@@ -216,8 +286,25 @@ function love.update(dt)
             gamestate = 'exchange'
             bosstimer = 5
             if bosskey == 1 then
-                exchange = Exchange(Gun('wand', 12, .6, 3, 1, .1, .7, 200, .2, 2, sounds.glock.shoot), inventory)
+                exchange = Exchange(Gun('wand', 12, .6, 3, 1, .1, .7, 200, .2, 1, sounds.wand.shoot), inventory)
+            elseif bosskey == 2 then 
+                exchange = Exchange(Gun('grenade', 1, .4, 4, 1, .1, 1, 0,  0, 4, sounds.grenade.shoot), inventory)
+            elseif bosskey == 3 then
+                boss = nil
+                bosskey = 0
+                player.health = player.maxHealth
+                gamestate = 'bossScreen'
+                flux.to(curtainLeft, .6, {x = curtainLeft.targetX, y = curtainLeft.targetY}):oncomplete(function() player.collider:setPosition(200,200) end):after(curtainLeft, .3, {x = curtainLeft.returnX, y = curtainLeft.returnY}):delay(2):oncomplete(function() gamestate = 'tutorial' end)
+                flux.to(curtainRight, .6, {x = curtainRight.targetX, y = curtainRight.targetY}):oncomplete(function() player.collider:setPosition(200,200) end):after(curtainRight, .3, {x = curtainRight.returnX, y = curtainRight.returnY}):delay(2)
+                textkey = 1
+                textbox:send('You killed off all the memes.')
+                textTable = {
+                    '[rainbow][bounce]Thanks for playing![/rainbow][/bounce]',
+                    '[rainbow][bounce]Thanks for playing![/rainbow][/bounce]',
+                    'Click space to play again.',
+                }
             end
+            bosskey = bosskey + 1
         end
 
         inventory:update(dt, player, boss, 'playerBullet')
@@ -227,12 +314,24 @@ function love.update(dt)
         exchange:update(dt)
     end
     textbox:update(dt)
+
+    if gamestate == 'game' then
+        if player.health <= 0 then
+            boss = nil
+            bosskey = 1
+            player.health = player.maxHealth
+            gamestate = 'bossScreen'
+            flux.to(curtainLeft, .6, {x = curtainLeft.targetX, y = curtainLeft.targetY}):oncomplete(function() player.collider:setPosition(50,50) end):after(curtainLeft, .3, {x = curtainLeft.returnX, y = curtainLeft.returnY}):delay(2):oncomplete(function() gamestate = 'game' end)
+            flux.to(curtainRight, .6, {x = curtainRight.targetX, y = curtainRight.targetY}):oncomplete(function() player.collider:setPosition(50,50) end):after(curtainRight, .3, {x = curtainRight.returnX, y = curtainRight.returnY}):delay(2)
+            flux.to(youDied, .6, {x = youDied.targetX, y = youDied.targetY}):oncomplete(function() player.collider:setPosition(50,50) end):after(youDied, .3, {x = youDied.returnX, y = youDied.returnY}):delay(2)
+        end
+    end
 end
 
 function love.draw()
 
     
-    if gamestate == 'game' or gamestate == 'tutorial' or gamestate == 'exchange' then
+    if gamestate == 'game' or gamestate == 'tutorial' or gamestate == 'exchange' or gamestate == 'bossScreen'then
         love.graphics.push()
         love.graphics.translate(shake.x, shake.y)
         cam:attach()
@@ -244,16 +343,15 @@ function love.draw()
                 boss:draw(player)
             end
             player:draw()
+            
             inventory:drawGuns(player)
-            world:draw()
         cam:detach()
         love.graphics.pop()
         inventory:drawUi()
         player:drawHealth()
-        if boss ~= nil then
+        if boss ~= nil and gamestate ~= 'bossScreen' then
             boss:drawHealth()
         end
-        
     end
 
     if gamestate == 'tutorial' then
@@ -265,6 +363,10 @@ function love.draw()
             love.graphics.draw(uiSpritesheet, space.quad, love.graphics.getWidth()/2 + 64*4 - 44, ty + 10, 0, 4, 4)
             love.graphics.setColor(1, 1, 1, 1)
         end
+    end
+
+    if boss == nil and gamestate == 'game' then
+        love.graphics.print(tostring(math.ceil(bosstimer)), love.graphics.getWidth() / 2, 10)
     end
 
     love.graphics.setColor(0, 0, 0, fadetoblack.var)
@@ -286,7 +388,12 @@ function love.draw()
         love.graphics.setColor(1, 1, 1, 1)
         exchange:draw()
     end
-    love.graphics.print(gamestate)
+
+    love.graphics.setColor(33/255, 24/255, 27/255)
+    love.graphics.rectangle('fill', curtainLeft.x, curtainLeft.y, love.graphics.getWidth()/2, love.graphics.getHeight())
+    love.graphics.rectangle('fill', curtainRight.x, curtainRight.y, love.graphics.getWidth()/2, love.graphics.getHeight())
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.print('You Died :(', youDied.x, youDied.y)
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
@@ -322,7 +429,7 @@ function love.keypressed(key, scancode, isrepeat)
             end
         end
     elseif gamestate == 'exchange' then
-        if key == 'escape' then
+        if key == 'escape' or key == 'enter' then
             gamestate = 'game'
             inventory.table[1] = exchange.table[exchange.inventory1].gun
             inventory.table[2] = exchange.table[exchange.inventory2].gun
