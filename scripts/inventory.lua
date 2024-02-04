@@ -195,6 +195,7 @@ end
 function Gun:shoot(x, y, angle, type, timer, inv)
     table.insert(self.bullets, {x = x, y = y, angle = angle, timer = timer, collider = world:newRectangleCollider(x, y, 12, 16)})
     local key = #self.bullets
+    self.bullets[key].scaleY = 4
     self.bullets[key].collider:setCollisionClass(type)
     self.bullets[key].collider:setAngle(angle)
     cy = math.sin(angle) * (self.bulletSpeed)
@@ -204,11 +205,12 @@ function Gun:shoot(x, y, angle, type, timer, inv)
     flux.to(inventory, .1, {sx = 3}):after(inventory, .1, {sx = 4})
     flux.to(self, .05, {offsetX = 15}):after(self, .2, {offsetX = 0})
     flux.to(self, .1, {offsetY = math.pi/8}):after(self, .2, {offsetY = 0})
+    flux.to(self.bullets[key], .05, {scaleY = 3}):after(self.bullets[key], .3, {scaleY = 4}):delay(.1)
 end
 
 function Gun:drawBullets()
     for _,bullet in pairs(self.bullets) do
-        love.graphics.draw(gunSpritesheet, self.bulletSprite, bullet.collider:getX(), bullet.collider:getY(), bullet.angle, 4, 4, 8, 8)
+        love.graphics.draw(gunSpritesheet, self.bulletSprite, bullet.collider:getX(), bullet.collider:getY(), bullet.angle, 4, bullet.scaleY, 8, 8)
     end
 end
 

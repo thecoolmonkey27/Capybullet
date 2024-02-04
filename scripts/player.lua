@@ -3,6 +3,7 @@ Player = Object.extend(Object)
 function Player:new(x, y)
     self.x = x
     self.y = y
+    self.squishX = 4
     self.collider = world:newRectangleCollider(self.x, self.y, 8*scale, 11*scale)
     self.collider:setCollisionClass('player')
     self.collider:setFixedRotation(true)
@@ -35,6 +36,8 @@ function Player:new(x, y)
     self.ui.fullHeart = love.graphics.newQuad(50, 3, 12, 11, uiSpritesheet)
     self.ui.halfHeart = love.graphics.newQuad(66, 3, 12, 11, uiSpritesheet)
     self.ui.emptyHeart = love.graphics.newQuad(82, 3, 12, 11, uiSpritesheet)
+    self.ui.mouse = love.graphics.newQuad(64, 16, 15, 15, uiSpritesheet)
+    self.ui.mouseBackground = love.graphics.newQuad(80, 16, 15, 15, uiSpritesheet)
 end
 
 function Player:update(dt, m)
@@ -129,7 +132,10 @@ function Player:update(dt, m)
 end
 
 function Player:draw()
-      self.animations[self.direction]:draw(self.spritesheet, self.x, self.y, 0, 4, 4, 8, 10)
+    love.graphics.setColor(0, 0, 0, .4)
+    love.graphics.ellipse('fill', self.x, self.y + 6 * 4, 6*4, 2*4)
+    love.graphics.setColor(1, 1, 1, 1)
+    self.animations[self.direction]:draw(self.spritesheet, self.x, self.y, 0, self.squishX, 4, 8, 10)
 end
 
 function Player:drawHealth()
@@ -143,6 +149,16 @@ function Player:drawHealth()
     if self.health / 2 ~= h then
         love.graphics.draw(uiSpritesheet, self.ui.halfHeart, 16 + 52*(h), love.graphics.getHeight() - 64, 0, 4, 4)
     end
+    love.graphics.draw(uiSpritesheet, self.ui.mouseBackground, 450, love.graphics.getHeight() - 72, 0, 4, 4)
+    love.graphics.setColor(245/255, 255/255, 232/255)
+    local ratio = self.rollDelayTimer / self.rollDelayTimerMax
+    if ratio < 0 then ratio = 0 end
+    love.graphics.rectangle('fill', 450 + 8, love.graphics.getHeight() - 72 + 8, 11*4*ratio, 11*4)
+    love.graphics.setColor(33/255, 24/255, 27/255)
+    love.graphics.rectangle('fill', 450 + 11*4*ratio + 4, love.graphics.getHeight() - 72 + 8, 4, 11*4)
+    
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(uiSpritesheet, self.ui.mouse, 450, love.graphics.getHeight() - 72, 0, 4, 4)
 end
 
 function Player:damage(amount)
@@ -151,6 +167,7 @@ function Player:damage(amount)
     flux.to(shake, .05, {x = -math.cos(angle)*7, y = -math.sin(angle)*7}):after(shake, .07, {x = 0, y = 0})
     sounds.player.hit:stop()
     sounds.player.hit:play()
+    flux.to(self, .1, {squishX = 3.2}):after(self, .1,  {squishX = 4})
 end
 
 

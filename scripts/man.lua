@@ -348,6 +348,11 @@ function Man:attackThree(dt, p)
 end
 
 function Man:draw(p, g)
+
+    love.graphics.setColor(0, 0, 0, .4)
+    love.graphics.ellipse('fill', self.x, self.y + 20 * 4, 10*4, 4*4)
+    love.graphics.setColor(1, 1, 1, 1)
+
     for _,bullet in ipairs(self.two.bullets) do
         love.graphics.draw(self.spritesheet, bullet.quad,  bullet.collider:getX(), bullet.collider:getY(), bullet.collider:getAngle(), 4, 4, 8, 8)
     end

@@ -228,6 +228,10 @@ function Doge:attackThree(dt, p)
 end
 
 function Doge:draw(p, g)
+    love.graphics.setColor(0, 0, 0, .4)
+    love.graphics.ellipse('fill', self.x, self.y + 16 * 4, 12*4, 4*4)
+    love.graphics.setColor(1, 1, 1, 1)
+
     if self.state == 'walk' then
         if self.facing == 'right' then
             self.animations.walkRight:draw(self.spritesheet, self.x, self.y, 0, self.squishX, 4, 16, 16)
