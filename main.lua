@@ -86,6 +86,17 @@ function love.load()
             wall:setCollisionClass('wall')
         end
     end
+    if gameMap.layers['green'] then
+        for i, obj in pairs(gameMap.layers['wall'].objects) do
+            green = {}
+            table.insert(green, {
+                x = obj.x, 
+                y = obj.y, 
+                width = obj.width, 
+                height = obj.height,
+            })
+        end
+    end
 
     -- CAMERA
     camera = require 'libraries/camera'
@@ -339,6 +350,11 @@ function love.draw()
         cam:attach()
             love.graphics.push()
             love.graphics.scale(4, 4)
+            
+            love.graphics.setColor(59/255, 125/255, 79/255)
+            love.graphics.rectangle("fill", 1, 1, 238, 238)
+            love.graphics.setColor(1, 1, 1, 1)
+                
             gameMap.layers.floor:draw()
             love.graphics.pop()
             if boss ~= nil and screenTimer < 0 then

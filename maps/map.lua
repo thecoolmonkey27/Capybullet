@@ -9,8 +9,8 @@ return {
   height = 20,
   tilewidth = 16,
   tileheight = 16,
-  nextlayerid = 3,
-  nextobjectid = 5,
+  nextlayerid = 4,
+  nextobjectid = 6,
   properties = {},
   tilesets = {
     {
@@ -250,6 +250,35 @@ return {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
           }
+        }
+      }
+    },
+    {
+      type = "objectgroup",
+      draworder = "topdown",
+      id = 3,
+      name = "green",
+      class = "",
+      visible = true,
+      opacity = 1,
+      offsetx = 0,
+      offsety = 0,
+      parallaxx = 1,
+      parallaxy = 1,
+      properties = {},
+      objects = {
+        {
+          id = 5,
+          name = "",
+          class = "",
+          shape = "rectangle",
+          x = 1,
+          y = 1,
+          width = 238,
+          height = 238,
+          rotation = 0,
+          visible = true,
+          properties = {}
         }
       }
     },
