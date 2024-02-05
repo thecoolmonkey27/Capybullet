@@ -22,6 +22,9 @@ function Pepe:new(x, y)
     self.stateTimerMax = 3
     self.stateTimer = 3
 
+    self.soundCooldown = .3
+    self.soundCooldownMax = .3
+
     self.regular = {
         bullets = {},
         speed = 300,
@@ -76,10 +79,14 @@ end
 
 function Pepe:playSound()
     local sound = sounds.wand.shoot:clone()
-    sound:play()
+    if self.soundCooldown < 0 then
+        sound:play()
+        self.soundCooldown = self.soundCooldownMax
+    end
 end
 
 function Pepe:update(dt, p, i)
+    self.soundCooldown = self.soundCooldown - dt
     self.x = self.collider:getX()
     self.y = self.collider:getY()
 
