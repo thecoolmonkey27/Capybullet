@@ -57,7 +57,7 @@ function Exchange:draw()
     love.graphics.draw(uiSpritesheet, self.arrowQuad, love.graphics.getWidth() / 2 - 128, love.graphics.getHeight() - 100, 0, 4, 4)
     love.graphics.print('click', love.graphics.getWidth()/2 - 50, love.graphics.getHeight() - 75)
 
-    love.graphics.print('Click escape to close. ', 20,  20)
+    love.graphics.print('Click Tab to close. ', 20,  20)
 end
 
 function Exchange:clicked(x, y)

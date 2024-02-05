@@ -447,7 +447,7 @@ function love.keypressed(key, scancode, isrepeat)
             end
         end
     elseif gamestate == 'exchange' then
-        if key == 'escape' or key == 'enter' then
+        if key == 'tab' or key == 'enter' then
             gamestate = 'game'
             inventory.table[1] = exchange.table[exchange.inventory1].gun
             inventory.table[2] = exchange.table[exchange.inventory2].gun
